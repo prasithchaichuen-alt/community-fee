@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - ระบบจัดการชุมชนเอื้ออาทรริมกก</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Sarabun', sans-serif; }
+        .stat-card { border-radius: 15px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .table-container { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-ok { width: 50px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark mb-4 shadow-sm">
+    <div class="container d-flex justify-content-between">
+        <span class="navbar-brand fw-bold">⚙️ ระบบจัดการข้อมูล (Admin)</span>
+        <div>
+            <a href="/" class="btn btn-outline-light btn-sm">🏠 กลับหน้าบันทึกเงิน</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container"> <div class="row g-3 mb-4">
+        <div class="col-6">
+            <div class="card bg-primary text-white p-3 text-center border-0 shadow-sm" style="border-radius: 15px; height: 100%;">
+                <small class="opacity-75">ยอดเงินรวมปี {{ year }}</small>
+                <h2 class="mb-1 fw-bold">{{ "{:,.0f}".format(stats.total_money or 0) }}.-</h2>
+                <div class="d-flex justify-content-around mt-2 pt-2 border-top" style="border-color: rgba(255,255,255,0.2) !important; font-size: 0.85rem;">
+                    <div>💵 สด: <b>{{ "{:,.0f}".format(stats.cash_total or 0) }}</b></div>
+                    <div>📱 โอน: <b>{{ "{:,.0f}".format(stats.transfer_total or 0) }}</b></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6">
+            <a href="/admin/expenses" style="text-decoration: none;">
+                <div class="card bg-danger text-white p-3 text-center border-0 shadow-sm" style="border-radius: 15px; height: 100%;">
+                    <small class="opacity-75">ยอดรายจ่ายปี {{ year }}</small>
+                    <h2 class="mb-0 fw-bold" style="line-height: 1.2;">{{ "{:,.0f}".format(expense_stats.total_expense or 0) }}.-</h2>
+                    <div class="mt-2 pt-2 border-top" style="border-color: rgba(255,255,255,0.2) !important; font-size: 0.85rem;">
+                        <span class="opacity-75">คงเหลือ:</span> 
+                        <span class="fw-bold">{{ "{:,.0f}".format((stats.total_money or 0) - (expense_stats.total_expense or 0)) }}.-</span>
+                    </div>
+                    <div class="small opacity-75 mt-1" style="font-size: 0.7rem;">คลิกจัดการรายจ่าย 🔍</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6">
+            <a href="/history" style="text-decoration: none;">
+                <div class="card stat-card bg-success text-white p-3 text-center border-0 shadow-sm" style="border-radius: 15px; height: 100%;">
+                    <small class="opacity-75">ชำระแล้ว (หลัง)</small>
+                    <h2 class="mb-0 fw-bold" style="line-height: 1.5;">{{ stats.house_count or 0 }} / 600</h2>
+                    <div class="small opacity-75 mt-1" style="font-size: 0.75rem;">คลิกเพื่อดูประวัติ 🔍</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6">
+            <div class="card bg-secondary text-white p-3 text-center border-0 shadow-sm opacity-75" style="border-radius: 15px; height: 100%;">
+                <small class="opacity-75">งบโครงการ</small>
+                <h2 class="mb-0 fw-bold" style="line-height: 1.5;">0.-</h2>
+                <div class="small opacity-75 mt-1" style="font-size: 0.75rem;">ยังไม่เปิดใช้งาน 🛠️</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-3 mb-4 border-0 shadow-sm" style="border-radius: 15px;">
+        <h6 class="fw-bold mb-3 text-muted">🔒 ตั้งค่าหน้าหลัก</h6>
+        <div class="d-flex gap-3">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="btn_payment" {% if settings.btn_payment %}checked{% endif %} onchange="updateSetting('btn_payment', this.checked)">
+                <label class="form-check-label small">ปุ่มรับเงิน</label>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="btn_expense" {% if settings.btn_expense %}checked{% endif %} onchange="updateSetting('btn_expense', this.checked)">
+                <label class="form-check-label small">ปุ่มรายจ่าย</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-4 mb-4 border-0 shadow-sm" style="border-radius: 15px;">
+        <h6 class="fw-bold mb-3 text-secondary">📊 ระบบออกรายงานรายรับ</h6>
+        <div class="row g-3">
+            <div class="col-12 col-md-8 border-end">
+                <label class="small text-muted fw-bold">📅 รายงานรายวัน </label>
+                <div class="input-group mb-2">
+                    <input type="date" id="report_date" class="form-control" value="{{ today }}">
+                    <select id="report_filter_day" class="form-select">
+                        <option value="all">ทุกรายการ</option>
+                        <option value="cash">เงินสด</option>
+                        <option value="transfer">เงินโอน</option>
+                    </select>
+                    <button onclick="openDailyReport()" class="btn btn-success fw-bold">🖨️ ออกรายงาน</button>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+    <label class="small text-muted fw-bold">🌎 รายงานสรุปปี {{ year }}</label>
+    <select id="report_filter_all" class="form-select mb-2">
+        <option value="all">🏠 ทั้งหมด 600 หลัง</option>
+        <option value="paid_360">✅ จ่ายครบ (360.-)</option>
+        <option value="paid_180">🟡 จ่ายบางส่วน (180.-)</option> <option value="unpaid">❌ ยังไม่จ่าย</option>
+        <option value="ว่าง">📭 เฉพาะบ้านว่าง</option>           <option value="ยกเว้น">🚫 เฉพาะบ้านที่ยกเว้น</option>     </select>
+    <button onclick="openSummaryReport()" class="btn btn-primary w-100 fw-bold">📄 รายงานทั้งปี</button>
+</div>
+        </div>
+    </div>
+
+    <div class="card p-4 mb-4 border-0 shadow-sm" style="border-radius: 15px;">
+        <h6 class="fw-bold mb-3 text-danger">💸 ระบบรายงานรายจ่าย</h6>
+        <div class="row g-3">
+            <div class="col-12 col-md-8 border-end">
+                <label class="small text-muted fw-bold">📅 รายงานรายจ่ายแยกตามวัน/เดือน </label>
+                <div class="input-group mb-2">
+                    <input type="date" id="expense_report_date" class="form-control" value="{{ today }}">
+                    <select id="expense_report_filter_type" class="form-select">
+                        <option value="daily">รายวัน</option>
+                        <option value="monthly">รายเดือน</option>
+                    </select>
+                    <button onclick="openExpenseReport()" class="btn btn-danger fw-bold">🖨️ ออกรายงาน</button>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <label class="small text-muted fw-bold">📂 รายงานสรุปปี {{ year }} (แยกหมวด)</label>
+                <select id="expense_report_category" class="form-select mb-2">
+                    <option value="all">📁 ทุกหมวดหมู่</option>
+                    <option value="1">1. ค่าใช้จ่ายส่วนกลาง</option>
+                    <option value="2">2. ค่าจ้างบริการ</option>
+                    <option value="3">3. ค่าใช้จ่ายกิจกรรม</option>
+                    <option value="4">4. ค่าดำเนินการ</option>
+                </select>
+                <button onclick="openExpenseSummaryReport()" class="btn btn-outline-danger w-100 fw-bold">📄 รายงานแยกหมวด</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<a href="{{ url_for('force_sync') }}" class="btn btn-primary">
+    🔄 อัปเดตข้อมูลขึ้นหน้าเว็บตอนนี้เลย
+</a>
+
+<div class="mt-4 mb-4">
+    <a href="{{ url_for('backup_now') }}" class="btn btn-warning btn-lg" onclick="return confirm('คุณต้องการสำรองข้อมูลตอนนี้ใช่หรือไม่?')">
+        📦 สำรองฐานข้อมูล (Backup DB)
+    </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<script>
+// ฟังก์ชันบันทึกค่าเปิด-ปิดปุ่ม (AJAX)
+function updateSetting(key, isChecked) {
+    let val = isChecked ? 1 : 0;
+    fetch('/update_setting', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `key=${key}&value=${val}`
+    });
+}
+
+function openExpenseReport() {
+    const date = document.getElementById('expense_report_date').value;
+    const filter = document.getElementById('expense_report_filter_type').value;
+    window.open(`/report_expense?date=${date}&filter=${filter}`, '_blank');
+}
+
+function openExpenseSummaryReport() {
+    const category = document.getElementById('expense_report_category').value;
+    window.open(`/report_expense_summary?category=${category}&year={{ year }}`, '_blank');
+}
+
+function openDailyReport(){
+    let d = document.getElementById('report_date').value;
+    let f = document.getElementById('report_filter_day').value;
+    window.open(`/report_print?mode=daily&date=${d}&filter=${f}`, '_blank');
+}
+
+function openSummaryReport(){
+    let f = document.getElementById('report_filter_all').value;
+    window.open(`/report_print?mode=summary&condition=${f}`, '_blank');
+}
+</script>
+
+</body>
+</html>

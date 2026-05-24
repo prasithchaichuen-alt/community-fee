@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บันทึกรับเงินชุมชนเอื้ออาทรริมกก</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f0f2f5; font-family: sans-serif; }
+        .main-card { border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; max-width: 500px; margin: auto; }
+        .btn-option { padding: 12px; font-weight: bold; border-radius: 10px; }
+        .status-box { background: #e7f5ff; border: 1px solid #a5d8ff; border-radius: 10px; padding: 10px; font-size: 0.9rem; }
+        .admin-link { text-decoration: none; color: #adb5bd; font-size: 0.8rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="d-flex justify-content-between mb-2">
+    <button onclick="refreshPage()" class="btn btn-sm btn-outline-secondary">
+        🔄 รีเฟรช
+    </button>
+
+    <a href="#" onclick="enterAdmin()" class="admin-link">⚙️ ADMIN LOGIN</a>
+</div>
+
+        <div class="card main-card p-4 mb-4">
+            <div class="card main-card p-4 mb-4">
+    <div class="text-center mb-4">
+        <small class="text-muted text-uppercase fw-bold" style="letter-spacing: 2px; font-size: 0.7rem;">ชุมชนเอื้ออาทรริมกก</small>
+        <h4 class="text-primary fw-bold mt-1 mb-2">
+            🏠 ระบบบันทึกรับเงิน
+        </h4>
+        <div class="mx-auto" style="width: 40px; height: 3px; background: #0d6efd; border-radius: 10px;"></div>
+    </div>
+            
+            {% if request.args.get('error') %}
+            <div class="alert alert-danger border-0 shadow-sm mb-3" style="font-size: 0.9rem;">
+                ⚠️ {{ request.args.get('error') }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/">
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">วันที่ชำระ</label>
+                    <input type="date" name="payment_date" class="form-control" value="{{ today }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">เลือกบ้านเลขที่</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-secondary text-white fw-bold">410 /</span>
+                        <input type="number" id="house_suffix" class="form-control form-control-lg" oninput="syncHouseValue()" placeholder="พิมพ์เลขท้าย..." required>
+                    </div>
+                    <input type="hidden" name="house_number" id="house_input">
+                </div>
+
+                <div id="status_display" class="status-box mb-3 d-none">
+                    <div id="info_name" class="fw-bold text-primary"></div>
+                    <div id="info_paid" class="small text-muted"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">ชื่อเจ้าของบ้าน</label>
+                    <input type="text" name="owner_name" id="owner_input" class="form-control" required>
+                </div>
+
+                <!-- ✅ ปุ่มแก้ชื่อ/สถานะ (ซ้าย) + select (ขวา) -->
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <button type="button" onclick="confirmEditBasic()" class="btn btn-warning w-100 fw-bold border border-dark shadow-sm">
+                            ⚠️ แก้ชื่อ/สถานะ
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <select name="status" id="status_input" class="form-select">
+                            <option value="ปกติ">🟢 ปกติ</option>
+                            <option value="ว่าง">📭 ว่าง</option>
+                            <option value="ยกเว้น">🚫 ยกเว้น</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label class="form-label small fw-bold text-muted">ยอดที่ต้องการบันทึก</label>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <input type="radio" class="btn-check" name="amount" id="a180" value="180" checked>
+                        <label class="btn btn-outline-primary w-100 btn-option" for="a180">180.-</label>
+                    </div>
+                    <div class="col-6">
+                        <input type="radio" class="btn-check" name="amount" id="a360" value="360">
+                        <label class="btn btn-outline-primary w-100 btn-option" for="a360">360.-</label>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-4">
+                    <div class="col-6">
+                        <input type="radio" class="btn-check" name="payment_type" id="c1" value="สด" checked>
+                        <label class="btn btn-outline-success w-100 btn-option" for="c1">💵 เงินสด</label>
+                    </div>
+                    <div class="col-6">
+                        <input type="radio" class="btn-check" name="payment_type" id="c2" value="โอน">
+                        <label class="btn btn-outline-success w-100 btn-option" for="c2">📱 เงินโอน</label>
+                    </div>
+                </div>
+
+                <!-- ✅ ปุ่มแก้ยอด (ซ้าย) + บันทึก (ขวา) -->
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button type="button" onclick="confirmEditPayment()" class="btn btn-warning w-100 fw-bold border border-dark shadow-sm">
+                            ⚠️ แก้ยอดเงิน
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button type="button" onclick="confirmAdd()" class="btn btn-primary w-100 fw-bold">
+                            💾 บันทึก
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+<script>
+const membersData = {{ members_json | safe }};
+const paidData = {{ paid_json | safe }};
+const statusData = {{ status_json | safe }};
+
+function syncHouseValue() {
+    const suffix = document.getElementById('house_suffix').value;
+    const fullValue = suffix ? "410/" + suffix : "";
+    document.getElementById('house_input').value = fullValue;
+    updateUI();
+}
+
+function updateUI() {
+    const h = document.getElementById('house_input').value.trim();
+    const s = document.getElementById('status_display');
+    const n = document.getElementById('info_name');
+    const p = document.getElementById('info_paid');
+    const o = document.getElementById('owner_input');
+    const st = document.getElementById('status_input');
+
+    if (membersData[h]) {
+        s.classList.remove('d-none');
+        n.innerText = "เจ้าของ: " + membersData[h];
+        o.value = membersData[h];
+
+        const total = paidData[h] || 0;
+        p.innerText = "ปีนี้จ่ายแล้ว: " + total + " บาท (คงเหลือ: " + (360 - total) + ")";
+
+        st.value = statusData[h] || "ปกติ";
+    } else {
+        s.classList.add('d-none');
+        o.value = "";
+        st.value = "ปกติ";
+    }
+}
+
+// 🔥 confirm logic
+function getFormData() {
+    return {
+        house: document.getElementById('house_input').value,
+        name: document.getElementById('owner_input').value,
+        status: document.getElementById('status_input').value,
+        date: document.querySelector('[name="payment_date"]').value,
+        amount: document.querySelector('input[name="amount"]:checked')?.value,
+        payType: document.querySelector('input[name="payment_type"]:checked')?.value
+    };
+}
+
+function confirmEditBasic() {
+    const d = getFormData();
+    if (confirm(`⚠️ แก้ไขข้อมูล\n\nบ้าน: ${d.house}\nชื่อ: ${d.name}\nสถานะ: ${d.status}\nวันที่: ${d.date}`)) {
+        document.querySelector('form').action = '/edit_basic';
+        document.querySelector('form').submit();
+    }
+}
+
+function confirmEditPayment() {
+    const d = getFormData();
+    if (confirm(`⚠️ แก้ไขยอดเงิน\n\nบ้าน: ${d.house}\nจำนวน: ${d.amount}\nวิธี: ${d.payType}\nวันที่: ${d.date}\n\n‼️ จะลบของเดิม`)) {
+        document.querySelector('form').action = '/edit_payment';
+        document.querySelector('form').submit();
+    }
+}
+
+function confirmAdd() {
+    const d = getFormData();
+    
+    // ตรวจสอบว่ากรอกบ้านเลขที่หรือยัง
+    if (!d.house || d.house === "410/") {
+        alert("กรุณากรอกเลขที่บ้านให้ถูกต้อง");
+        return;
+    }
+
+    // ✅ ปรับให้รวบรวมเฉพาะข้อมูลการชำระเงินกับวันที่
+    const confirmMsg = `💾 ยืนยันการบันทึก\n\n` +
+                       `บ้าน: ${d.house}\n` +
+                       `ยอดเงิน: ${d.amount} บาท\n` +
+                       `วิธีจ่าย: ${d.payType}\n` +
+                       `วันที่ชำระ: ${d.date}`;
+
+    if (confirm(confirmMsg)) {
+        document.querySelector('form').action = '/add_payment';
+        document.querySelector('form').submit();
+    }
+}
+function enterAdmin() {
+    const password = prompt("กรุณาใส่รหัสผ่านผู้ดูแลระบบ:");
+    if (password === "1234") { // เปลี่ยน 1234 เป็นรหัสที่คุณต้องการ
+        window.location.href = "/admin"; // เปลี่ยนเป็น URL หน้า Admin ของคุณ
+    } else if (password !== null) {
+        alert("รหัสผ่านไม่ถูกต้อง!");
+    }
+}
+</script>
+
+
+
+</body>
+</html>

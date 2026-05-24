@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ประวัติจ่ายเงิน</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .search-box {
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark mb-4 shadow-sm">
+    <div class="container d-flex justify-content-between">
+        <span class="navbar-brand fw-bold">📜 ประวัติจ่ายเงิน</span>
+        <a href="/admin" class="btn btn-outline-light btn-sm">← กลับหน้า Admin</a>
+    </div>
+</nav>
+
+<div class="container pb-5">
+    
+    <div class="search-box">
+        <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">🔍</span>
+            <input type="text" id="historySearch" class="form-control border-start-0" 
+                   placeholder="ค้นหาเลขบ้าน, ชื่อ, วันที่..." onkeyup="filterHistory()">
+        </div>
+        <div id="searchCount" class="small text-muted mt-2"></div>
+    </div>
+
+    <div class="table-responsive bg-white rounded shadow-sm">
+        <table class="table table-hover align-middle mb-0" id="historyTable">
+            <thead class="table-light">
+                <tr>
+                    <th>วันที่</th>
+                    <th>บ้าน</th>
+                    <th>ชื่อเจ้าของ</th>
+                    <th>ยอดเงิน</th>
+                    <th>วิธีจ่าย</th>
+                    <th class="text-center">จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr class="payment-row">
+                    <td>{{ p.payment_date }}</td>
+                    <td><span class="badge bg-secondary" style="font-size: 0.9rem;">{{ p.house_number }}</span></td>
+                    <td class="owner-name">{{ p.name }}</td>
+                    <td class="text-primary fw-bold">{{ p.amount }}.-</td>
+                    <td>{{ p.payment_type }}</td>
+                    <td class="text-center">
+                        <a href="/delete_payment/{{ p.id }}" 
+                           class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('ต้องการลบรายการนี้ใช่หรือไม่?')">
+                            ลบ
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function filterHistory() {
+    const input = document.getElementById('historySearch');
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById('historyTable');
+    const rows = table.getElementsByClassName('payment-row');
+    let count = 0;
+
+    for (let i = 0; i < rows.length; i++) {
+        // ค้นหาจากข้อความทั้งหมดในแถวนั้นๆ
+        const text = rows[i].textContent.toLowerCase();
+        
+        if (text.includes(filter)) {
+            rows[i].style.display = "";
+            count++;
+        } else {
+            rows[i].style.display = "none";
+        }
+    }
+    
+    // แสดงจำนวนผลลัพธ์
+    const countDisplay = document.getElementById('searchCount');
+    if (filter === "") {
+        countDisplay.innerText = "";
+    } else {
+        countDisplay.innerText = `พบ ${count} รายการ`;
+    }
+}
+</script>
+
+</body>
+</html>

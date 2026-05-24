@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - ระบบจัดการชุมชนเอื้อาทรริมกก</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Sarabun', sans-serif; }
+        .stat-card { border-radius: 15px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .table-container { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-ok { width: 50px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark mb-4 shadow-sm">
+    <div class="container d-flex justify-content-between">
+        <span class="navbar-brand fw-bold">⚙️ ระบบจัดการข้อมูล (Admin)</span>
+        <div>
+            
+            <a href="/" class="btn btn-outline-light btn-sm">🏠 กลับหน้าบันทึกเงิน</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container pb-5">
+
+    <div class="row g-3 mb-4">
+        <div class="col-6">
+            <div class="card stat-card bg-primary text-white p-3 text-center border-0 shadow-sm" style="border-radius: 15px;">
+                <small class="opacity-75">ยอดเงินรวมปี {{ year }}</small>
+                <h2 class="mb-1 fw-bold">{{ "{:,.0f}".format(stats.total_money or 0) }}.-</h2>
+                
+                <div class="d-flex justify-content-around mt-2 pt-2 border-top" style="border-color: rgba(255,255,255,0.2) !important; font-size: 0.85rem;">
+                    <div class="text-white-50">
+                        💵 สด: <span class="text-white fw-bold">{{ "{:,.0f}".format(stats.cash_total or 0) }}</span>
+                    </div>
+                    <div class="text-white-50">
+                        📱 โอน: <span class="text-white fw-bold">{{ "{:,.0f}".format(stats.transfer_total or 0) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6">
+            <a href="/history" style="text-decoration: none;">
+                <div class="card stat-card bg-success text-white p-3 text-center border-0 shadow-sm" style="border-radius: 15px; height: 100%;">
+                    <small class="opacity-75">ชำระแล้ว (หลัง)</small>
+                    <h2 class="mb-0 fw-bold" style="line-height: 1.5;">{{ stats.house_count or 0 }} / 600</h2>
+                    <div class="small opacity-75 mt-1" style="font-size: 0.75rem;">คลิกเพื่อดูประวัติ 🔍</div>
+                </div>
+            </a>
+        </div>
+    </div>
+<!-- ✅ เอารายงานแบบเดิมกลับมา -->
+
+
+<div class="card p-4 mb-4 border-0 shadow-sm" style="border-radius: 15px;">
+    <h6 class="fw-bold mb-3 text-secondary">📊 ระบบออกรายงาน</h6>
+    <div class="row g-3">
+        <div class="col-12 col-md-8 border-end">
+            <label class="small text-muted fw-bold">📅 รายงานแยกตามวัน (ค่าเริ่มต้นคือวันนี้)</label>
+            <div class="input-group mb-2">
+                <input type="date" id="report_date" class="form-control" value="{{ today }}">
+                <select id="report_filter_day" class="form-select">
+                    <option value="all">ทุกรายการของวันนี้</option>
+                    <option value="cash">เฉพาะเงินสด</option>
+                    <option value="transfer">เฉพาะเงินโอน</option>
+                </select>
+                <button onclick="openDailyReport()" class="btn btn-success fw-bold">🖨️ ออกรายงานรายวัน</button>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <label class="small text-muted fw-bold">🌎 รายงานสรุปภาพรวมปี {{ year }}</label>
+            <select id="report_filter_all" class="form-select mb-2">
+                <option value="all">🏠 สมาชิกทั้งหมด (600 หลัง)</option>
+                <option value="paid_360">✅ จ่ายครบ (360.-)</option>
+                <option value="paid_180">🟡 จ่ายบางส่วน (180.-)</option>
+                <option value="unpaid">❌ ยังไม่จ่ายเลย</option>
+                <option value="ว่าง">📭 เฉพาะบ้านว่าง</option>
+                <option value="ยกเว้น">🚫 เฉพาะบ้านที่ยกเว้น</option>
+            </select>
+            <button onclick="openSummaryReport()" class="btn btn-primary w-100 fw-bold">📄 ออกรายงานทั้งปี</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ฟังก์ชันสำหรับรายงานรายวัน (ส่งวันที่ไปด้วย)
+function openDailyReport(){
+    let d = document.getElementById('report_date').value;
+    let f = document.getElementById('report_filter_day').value;
+    window.open('/report_print?mode=daily&date=' + d + '&filter=' + f, '_blank');
+}
+
+// ฟังก์ชันสำหรับรายงานภาพรวม (ไม่ส่งวันที่)
+function openSummaryReport(){
+    let f = document.getElementById('report_filter_all').value;
+    window.open('/report_print?mode=summary&condition=' + f, '_blank');
+}
+</script>
+
+
+<!-- ✅ เอารายงานแบบเดิมกลับมา -->
+
+<script>
+function openReport(){
+    let c = document.getElementById('report_filter').value;
+    window.open('/report_print?condition='+c,'_blank');
+}
+</script>
+
+</body>
+</html>

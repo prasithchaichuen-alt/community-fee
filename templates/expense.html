@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บันทึกรายจ่าย - ชุมชนเอื้ออาทรริมกก</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8d7da; font-family: sans-serif; } 
+        .main-card { border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; max-width: 500px; margin: auto; background: white; }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="card main-card p-4">
+            <div class="text-center mb-4">
+                <h4 class="text-danger fw-bold">💸 ลงบันทึกรายจ่าย (กองกลาง)</h4>
+                <hr>
+            </div>
+
+            <form method="POST" action="/add_expense">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">วันที่จ่าย</label>
+                    <input type="date" name="expense_date" class="form-control" value="{{ today }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">หมวดหมู่รายจ่าย</label>
+                    <select name="category" class="form-select" required>
+                        <option value="">-- เลือกหมวดหมู่ --</option>
+                        <option value="1"selected>1. ค่าใช้จ่ายส่วนกลาง</option>
+                        <option value="2">2. ค่าจ้างบริการ</option>
+                        <option value="3">3. ค่าใช้จ่ายกิจกรรม</option>
+                        <option value="4">4. ค่าดำเนินการ</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">รายการ/รายละเอียด</label>
+                    <textarea name="detail" class="form-control" placeholder="เช่น ค่าซ่อมก๊อกน้ำสำนักงาน, ค่าไฟฟ้าส่วนกลาง" rows="2" required></textarea>
+                </div>
+
+                
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">จำนวนเงิน (บาท)</label>
+                    <input type="number" name="amount" class="form-control form-control-lg" placeholder="0.00" step="0.01" required>
+                </div>
+
+                <button type="submit" class="btn btn-danger w-100 fw-bold shadow-sm" onclick="return confirm('ยืนยันการบันทึกรายจ่ายใช่หรือไม่?')">
+                    💾 บันทึกรายจ่าย
+                </button>
+            </form>
+
+            <div class="mt-5">
+                <h6 class="fw-bold text-muted border-bottom pb-2">รายการล่าสุด (10 รายการ)</h6>
+                <div class="list-group list-group-flush">
+    {% for item in expenses %}
+    <div class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+         <div>
+             <div class="small fw-bold">{{ item.detail }}</div>
+             <small class="text-muted">{{ item.expense_date }} | 
+                {% if item.category == '1' %}ส่วนกลาง
+                 {% elif item.category == '2' %}จ้างบริการ
+                 {% elif item.category == '3' %}กิจกรรม
+                 {% elif item.category == '4' %}ดำเนินการ
+                 {% else %}ไม่ระบุ{% endif %}
+             </small>
+         </div>
+         <span class="text-danger fw-bold">- {{ "{:,.2f}".format(item.amount) }}</span>
+    </div>
+    {% endfor %}
+</div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="/" class="btn btn-outline-secondary btn-sm fw-bold">⬅️ กลับไปหน้าเมนูหลัก</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

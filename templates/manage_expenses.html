@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>จัดการรายจ่าย - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold text-danger">🔍 จัดการรายการรายจ่าย</h4>
+            <a href="/admin" class="btn btn-outline-secondary">กลับหน้า Admin</a>
+        </div>
+
+        <div class="card border-0 shadow-sm p-3 mb-4">
+            <form method="GET" class="row g-2">
+                <div class="col-9 col-md-10">
+                    <input type="text" name="search" class="form-control" placeholder="ค้นหาด้วยชื่อรายการหรือวันที่..." value="{{ search }}">
+                </div>
+                <div class="col-3 col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">ค้นหา</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-responsive bg-white rounded shadow-sm">
+            <table class="table table-hover mb-0">
+                <thead class="table-danger">
+                    <tr>
+                        <th>วันที่</th>
+                        <th>รายละเอียด</th>
+                        <th class="text-end">จำนวนเงิน</th>
+                        <th class="text-center">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in expenses %}
+                    <tr>
+                        <td>{{ item.expense_date }}</td>
+                        <td>{{ item.detail }}</td>
+                        <td class="text-end fw-bold text-danger">{{ "{:,.2f}".format(item.amount) }}</td>
+                        <td class="text-center">
+                            <a href="/delete_expense/{{ item.id }}" class="btn btn-sm btn-danger" onclick="return confirm('ยืนยันลบรายการนี้?')">ลบ</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="text-center py-4 text-muted">ไม่พบข้อมูลรายจ่าย</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
